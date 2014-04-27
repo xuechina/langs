@@ -20,7 +20,7 @@ local.properties
 .classpath
 .settings
 target/
-libs/
+# libs
 classes/
 gen-external-apklibs/
 
