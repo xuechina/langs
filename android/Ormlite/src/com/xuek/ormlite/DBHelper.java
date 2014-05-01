@@ -1,4 +1,4 @@
-package com.xuek.demo.ormlite;
+package com.xuek.ormlite;
 
 import java.sql.SQLException;
 
@@ -10,8 +10,8 @@ import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import com.xuek.demo.entity.ImMessageEntity;
-import com.xuek.demo.entity.UserEntity;
+import com.xuek.entity.ImMessageEntity;
+import com.xuek.entity.UserEntity;
 
 public class DBHelper extends OrmLiteSqliteOpenHelper {
 

@@ -1,4 +1,4 @@
-package com.xuek.demo.ormlite;
+package com.xuek.ormlite;
 
 
 import android.annotation.SuppressLint;

@@ -1,4 +1,4 @@
-package com.xuek.demo.ormlite;
+package com.xuek.ormlite;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -12,8 +12,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.table.TableUtils;
-import com.xuek.demo.entity.ImMessageEntity;
-import com.xuek.demo.entity.UserEntity;
+import com.xuek.entity.ImMessageEntity;
+import com.xuek.entity.UserEntity;
 
 public class OrmLiteActivity extends OrmLiteBaseActivity<DBHelper> {
 	private static final String TAG = "OrmLiteActivity";

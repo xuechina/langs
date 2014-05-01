@@ -1,4 +1,4 @@
-package com.xuek.demo.entity;
+package com.xuek.entity;
 
 import java.io.Serializable;
 
