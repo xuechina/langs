@@ -17,9 +17,11 @@ out/
 local.properties
 
 .project
+.txt
 .classpath
 .settings
 target/
+.apt_generated
 # libs
 classes/
 gen-external-apklibs/
