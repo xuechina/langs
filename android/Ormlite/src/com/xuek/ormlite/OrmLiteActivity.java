@@ -83,6 +83,11 @@ public class OrmLiteActivity extends OrmLiteBaseActivity<DBHelper> {
 		}
 
 	}
+	/**
+	 * sql: select * from immessageentity; 
+	 * @author xuechinahb@gmail.com
+	 * Apr 28, 2014
+	 */
 	public void query() {
 		try {
 			List<ImMessageEntity> list = mImMessageDao.queryForAll();
