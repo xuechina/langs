@@ -38,25 +38,28 @@ public class MainActivity extends Activity {
 	private ImageView imageView;
 	
 	private int mDisplayWidth;
-	@SuppressWarnings("unused")
 	private int mDisplayHeight;
 	
 	private int mMaxTextureSize;
+	
+	@SuppressWarnings("unused")
+	private int mBitmapWidth, mBitmapHeight;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.main);
 		imageView = (ImageView) findViewById(R.id.image);
-		imageView.setOnTouchListener(new TouchListener());
+//		imageView.setOnTouchListener(new TouchListener());
+		imageView.setOnTouchListener(new MultiPointTouchListener(imageView));
 		
 		System.out.println("getMaxTextureSize() = " + getMaxTextureSize());
 		mMaxTextureSize = getMaxTextureSize();
-		System.out.println("mMaxTextureSize = " + mMaxTextureSize );
 		getDisplayWH();
 //		load();
-		load2();
+//		load2();
 //		load3();
+		load_horizontal_img();
 	}
 	
 	/**
@@ -82,7 +85,7 @@ public class MainActivity extends Activity {
     } 
 	
 	/**
-	 * load bitmap from resouce.
+	 * load bitmap from resouce.Pic will be cropped.
 	 * the better way is to use synchronized thread.
 	 * Notice: Maybe throws exception， “Caused by: java.lang.IllegalArgumentException: height must be > 0”。Because mMaxTextureSize is 0.
 	 */
@@ -99,6 +102,7 @@ public class MainActivity extends Activity {
 		imageView.setImageBitmap(b);
 	}
 
+	@SuppressWarnings("unused")
 	private void load2() {
 		try {
 			Drawable drawable = createLargeDrawable(R.raw.test);
@@ -134,6 +138,38 @@ public class MainActivity extends Activity {
 			Bitmap b =  Bitmap.createScaledBitmap(bitmap, mDisplayWidth, mMaxTextureSize, false);
 			
 			imageView.setImageBitmap(b);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * load horizontal image
+	 */
+	private void load_horizontal_img() {
+		try {
+			Drawable drawable = createLargeDrawable(R.raw.test_h);
+			imageView.setImageDrawable(drawable);
+			imageView.setScaleType(ScaleType.MATRIX);
+			Matrix matrix = new Matrix();
+			float displayHeight = mDisplayHeight;
+//			matrix.setTranslate(0, (displayHeight - drawable.getMinimumHeight()) / 2);
+			matrix.postScale(1f , displayHeight / drawable.getMinimumHeight());
+//		    matrix.postTranslate(mDisplayWidth/2, mDisplayHeight/2); 
+//			matrix.postScale(1, 1, 1, displayHeight / drawable.getMinimumHeight());
+			
+//			Matrix translate = new Matrix();
+//			translate.setTranslate(0, (displayHeight - drawable.getMinimumHeight()) / 2);
+//			translate.postTranslate(0, (displayHeight - drawable.getMinimumHeight()) / 2);
+			
+//			matrix.postConcat(translate);
+			imageView.setImageMatrix(matrix);
+			
+			mBitmapWidth = drawable.getMinimumWidth();
+			mBitmapHeight = drawable.getMinimumHeight();
+//			imageView.setImageMatrix(translate);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}catch (Exception e) {
@@ -284,6 +320,143 @@ public class MainActivity extends Activity {
 		}
 
 	}
-	
-	
+	class MultiPointTouchListener implements OnTouchListener {      
+        
+        Matrix matrix = new Matrix();      
+        Matrix savedMatrix = new Matrix();      
+        
+        public ImageView image;      
+        static final int NONE = 0;      
+        static final int DRAG = 1;      
+        static final int ZOOM = 2;      
+        int mode = NONE;      
+        
+        PointF start = new PointF();      
+        PointF mid = new PointF();      
+        float oldDist = 1f;      
+        
+        
+        public MultiPointTouchListener(ImageView image) {      
+            super();      
+            this.image = image;      
+        }      
+        
+        @Override      
+        public boolean onTouch(View v, MotionEvent event) {      
+            this.image.setScaleType(ScaleType.MATRIX);      
+            
+            ImageView view = (ImageView) v;      
+        
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {    
+                
+            case MotionEvent.ACTION_DOWN:      
+        
+                matrix.set(view.getImageMatrix());      
+                savedMatrix.set(matrix);      
+                start.set(event.getX(), event.getY());      
+                mode = DRAG;      
+                break;      
+            case MotionEvent.ACTION_POINTER_DOWN:      
+                oldDist = spacing(event);      
+                if (oldDist > 10f) {      
+                    savedMatrix.set(matrix);      
+                    midPoint(mid, event);      
+                    mode = ZOOM;      
+                }      
+                break;      
+            case MotionEvent.ACTION_UP:      
+            case MotionEvent.ACTION_POINTER_UP:      
+                mode = NONE;      
+                break;      
+            case MotionEvent.ACTION_MOVE:      
+            	System.out.println("--mode = " + mode);
+                if (mode == DRAG) {      
+                    if(mapState.right>=50&&mapState.left<=(mDisplayWidth-50)&&mapState.top>=(-bHeight+50)&&mapState.bottom<=(mDisplayHeight+bHeight-200)){
+                    	matrix.set(savedMatrix);      
+                    	matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);      
+                    }
+                    //最左边
+                    if(mapState.right<=50){
+                    	if((event.getX() - start.x)>0){//往右边
+                    		matrix.set(savedMatrix);      
+                    		matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);      
+                    	}
+                    	
+                    }
+                    //最右边
+                    if(mapState.left>=(mDisplayWidth-50)){
+                    	if((event.getX() - start.x)<0){//往左边
+	                    	matrix.set(savedMatrix);      
+	                    	matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);      
+                    	}
+                    	
+                    }
+                    //最上边
+                    if(mapState.top<=(-bHeight+50)){
+                    	if((event.getY() - start.y)>0){//往下
+                    		matrix.set(savedMatrix);      
+                    		matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);      
+                    	}
+                    	
+                    }
+                    //最下边
+                    if(mapState.bottom>=(mDisplayHeight+bHeight-200)){
+                    	if((event.getY() - start.y)<0){//往上
+	                    	matrix.set(savedMatrix);      
+	                    	matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);      
+                    	}
+                    	
+                    }
+                } else if (mode == ZOOM) {      
+            		float newDist = spacing(event);      
+            		if (newDist > 10f) {      
+            			if(bWidth/mBitmapWidth>0.4||bWidth/mBitmapWidth<0.4&&newDist>oldDist){
+            				matrix.set(savedMatrix);      
+            				float scale = newDist / oldDist;   
+            				System.out.println("scale = " + scale + "--mid.x = " + mid.x + "--mid.y = " + mid.y);
+            				matrix.postScale(scale, scale, mid.x, mid.y);      
+            			}
+            		}      
+                }      
+                break;      
+            }      
+            view.setImageMatrix(matrix);     
+            setView();
+            return true;    
+        }      
+        
+            
+        private float spacing(MotionEvent event) {      
+            float x = event.getX(0) - event.getX(1);      
+            float y = event.getY(0) - event.getY(1);      
+            return FloatMath.sqrt(x * x + y * y);      
+        }      
+        
+        private void midPoint(PointF point, MotionEvent event) {      
+            float x = event.getX(0) + event.getX(1);      
+            float y = event.getY(0) + event.getY(1);      
+            point.set(x / 2, y / 2);      
+        }      
+    }     
+	private float bWidth;// 放大缩小之后的图宽度
+	private float bHeight; 
+	float[] values = new float[9]; 
+	ImageState mapState = new ImageState(); 
+    private class ImageState { 
+        private float left; 
+        private float top; 
+        private float right; 
+        private float bottom; 
+    }
+    public void setView() { 
+    	Rect rect = imageView.getDrawable().getBounds(); 
+    	imageView.getImageMatrix().getValues(values); 
+        bWidth = rect.width() * values[0]; 
+        bHeight = rect.height() * values[0]; 
+ 
+        mapState.left = values[2]; 
+        mapState.top = values[5]; 
+        mapState.right = mapState.left + bWidth; 
+        mapState.bottom = mapState.top + bHeight; 
+    }
 }
