@@ -1,17 +1,27 @@
 package com.jerry.largebitmap;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.opengl.GLES10;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.FloatMath;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -44,7 +54,9 @@ public class MainActivity extends Activity {
 		mMaxTextureSize = getMaxTextureSize();
 		System.out.println("mMaxTextureSize = " + mMaxTextureSize );
 		getDisplayWH();
-		load();
+//		load();
+		load2();
+//		load3();
 	}
 	
 	/**
@@ -60,7 +72,7 @@ public class MainActivity extends Activity {
 	
 	/**
 	 * get max texture size; 
-	 * don't call in the first Activity, otherwise it always return 0. as you can see, I add {@linkplain HomeActivity} which is the entry of app. 
+	 * Notice: don't call in the first Activity, otherwise it always return 0. as you can see, I add {@linkplain HomeActivity} which is the entry of app. 
 	 * @return
 	 */
 	int getMaxTextureSize(){  
@@ -71,8 +83,10 @@ public class MainActivity extends Activity {
 	
 	/**
 	 * load bitmap from resouce.
-	 * the better way is to use synchronized thread
+	 * the better way is to use synchronized thread.
+	 * Notice: Maybe throws exception， “Caused by: java.lang.IllegalArgumentException: height must be > 0”。Because mMaxTextureSize is 0.
 	 */
+	@SuppressWarnings("unused")
 	private void load() {
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test);
 		
@@ -85,6 +99,99 @@ public class MainActivity extends Activity {
 		imageView.setImageBitmap(b);
 	}
 
+	private void load2() {
+		try {
+			Drawable drawable = createLargeDrawable(R.raw.test);
+			imageView.setImageDrawable(drawable);
+			imageView.setScaleType(ScaleType.MATRIX);
+			Matrix matrix = new Matrix();
+			float displayWidth = mDisplayWidth;
+			matrix.postScale(displayWidth / drawable.getMinimumWidth() , 1);
+			imageView.setImageMatrix(matrix);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@SuppressWarnings("unused")
+	private void load3(){
+		try {
+			Drawable drawable = createLargeDrawable(R.raw.test);
+			System.out.println("drawable.getMinimumWidth() = " + drawable.getMinimumWidth() + "--drawable.getMinimumHeight() = " + drawable.getMinimumHeight());
+			Bitmap bitmap = Bitmap.createBitmap(drawable.getMinimumWidth(), drawable.getMinimumHeight(), Bitmap.Config.ARGB_8888);
+			drawable.setBounds(0, 0, drawable.getMinimumWidth(), drawable.getMinimumHeight());
+			drawable.draw(new Canvas(bitmap));
+			
+			imageView.setScaleType(ScaleType.MATRIX);  
+//			Matrix matrix = new Matrix(); 
+//			float displayWidth = mDisplayWidth;
+//			float maxTextureSize = mMaxTextureSize;
+//			matrix.postScale(displayWidth/bitmap.getWidth(), maxTextureSize / drawable.getMinimumHeight());
+//			matrix.postScale(displayWidth/bitmap.getWidth(), 1);
+//			Bitmap b = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), mMaxTextureSize , matrix, false);
+			Bitmap b =  Bitmap.createScaledBitmap(bitmap, mDisplayWidth, mMaxTextureSize, false);
+			
+			imageView.setImageBitmap(b);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * http://stackoverflow.com/questions/15655713/dealing-with-androids-texture-size-limit
+	 * @param resId
+	 * @return
+	 * @throws IOException
+	 */
+	@SuppressLint("NewApi")
+	private Drawable createLargeDrawable(int resId) throws IOException {
+
+	    InputStream is = getResources().openRawResource(resId);
+	    BitmapRegionDecoder brd = BitmapRegionDecoder.newInstance(is, true);
+
+	    try {
+	        if (brd.getWidth() <= mMaxTextureSize && brd.getHeight() <= mMaxTextureSize) {
+	            return new BitmapDrawable(getResources(), is);
+	        }
+
+	        int rowCount = (int) Math.ceil((float) brd.getHeight() / (float) mMaxTextureSize);
+	        int colCount = (int) Math.ceil((float) brd.getWidth() / (float) mMaxTextureSize);
+
+	        BitmapDrawable[] drawables = new BitmapDrawable[rowCount * colCount];
+
+	        for (int i = 0; i < rowCount; i++) {
+
+	            int top = mMaxTextureSize * i;
+	            int bottom = i == rowCount - 1 ? brd.getHeight() : top + mMaxTextureSize;
+
+	            for (int j = 0; j < colCount; j++) {
+
+	                int left = mMaxTextureSize * j;
+	                int right = j == colCount - 1 ? brd.getWidth() : left + mMaxTextureSize;
+
+	                Bitmap b = brd.decodeRegion(new Rect(left, top, right, bottom), null);
+	                BitmapDrawable bd = new BitmapDrawable(getResources(), b);
+	                bd.setGravity(Gravity.TOP | Gravity.LEFT);
+	                drawables[i * colCount + j] = bd;
+	            }
+	        }
+
+	        LayerDrawable ld = new LayerDrawable(drawables);
+	        for (int i = 0; i < rowCount; i++) {
+	            for (int j = 0; j < colCount; j++) {
+	                ld.setLayerInset(i * colCount + j, mMaxTextureSize * j, mMaxTextureSize * i, 0, 0);
+	            }
+	        }
+
+	        return ld;
+	    }
+	    finally {
+	        brd.recycle();
+	    }
+	}
 	class TouchListener implements OnTouchListener {
 		
 		/** 记录是拖拉照片模式还是放大缩小照片模式 */
