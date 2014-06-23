@@ -110,7 +110,8 @@ public class MainActivity extends Activity {
 			imageView.setScaleType(ScaleType.MATRIX);
 			Matrix matrix = new Matrix();
 			float displayWidth = mDisplayWidth;
-			matrix.postScale(displayWidth / drawable.getMinimumWidth() , 1);
+			//matrix.postScale(displayWidth / drawable.getMinimumWidth() , 1);
+			matrix.postScale(displayWidth / drawable.getMinimumWidth() , displayWidth / drawable.getMinimumWidth());
 			imageView.setImageMatrix(matrix);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -156,7 +157,8 @@ public class MainActivity extends Activity {
 			Matrix matrix = new Matrix();
 			float displayHeight = mDisplayHeight;
 //			matrix.setTranslate(0, (displayHeight - drawable.getMinimumHeight()) / 2);
-			matrix.postScale(1f , displayHeight / drawable.getMinimumHeight());
+			//matrix.postScale(1f , displayHeight / drawable.getMinimumHeight());
+			matrix.postScale(displayHeight / drawable.getMinimumHeight() , displayHeight / drawable.getMinimumHeight());
 //		    matrix.postTranslate(mDisplayWidth/2, mDisplayHeight/2); 
 //			matrix.postScale(1, 1, 1, displayHeight / drawable.getMinimumHeight());
 			
