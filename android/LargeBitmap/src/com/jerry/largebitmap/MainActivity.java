@@ -50,8 +50,8 @@ public class MainActivity extends Activity {
 		
 		setContentView(R.layout.main);
 		imageView = (ImageView) findViewById(R.id.image);
-//		imageView.setOnTouchListener(new TouchListener());
-		imageView.setOnTouchListener(new MultiPointTouchListener(imageView));
+		imageView.setOnTouchListener(new TouchListener());
+//		imageView.setOnTouchListener(new MultiPointTouchListener(imageView));
 		
 		System.out.println("getMaxTextureSize() = " + getMaxTextureSize());
 		mMaxTextureSize = getMaxTextureSize();
@@ -258,6 +258,9 @@ public class MainActivity extends Activity {
 				mode = MODE_DRAG;
 				// 记录ImageView当前的移动位置
 				currentMatrix.set(imageView.getImageMatrix());
+				//add by jerry
+				matrix.set(imageView.getImageMatrix());
+				//add by jerry
 				startPoint.set(event.getX(), event.getY());
 				break;
 			// 手指在屏幕上移动，改事件会被不断触发
