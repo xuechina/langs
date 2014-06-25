@@ -227,7 +227,12 @@ public class MainActivity extends Activity {
 	        return ld;
 	    }
 	    finally {
-	        brd.recycle();
+	        try {
+		    	is.close();
+			 brd.recycle();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	    }
 	}
 	class TouchListener implements OnTouchListener {
